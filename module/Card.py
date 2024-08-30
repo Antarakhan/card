@@ -1,8 +1,11 @@
-'''
-suit: hearts, diamonds, clubs
-rank: 2, 3, 4 ,5, jack, queen, king
-value: int value
-'''
+"""
+Card class represents a single card with suit and rank
+suits: hearts, diamonds, clubs
+ranks: 2, 3, 4 ,5, jack, queen, king
+values: int value
+Calculates the value of the card
+Example: Card("Clubs", "Three") then values["Three"] which is 3
+"""
 from const.const import *
 
 

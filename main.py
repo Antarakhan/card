@@ -1,64 +1,128 @@
+from module.Chips import Chips
 from module.Deck import Deck
-from module.Player import Player
+from module.Hand import Hand
+playing = True
 
-player_one = Player("One")
-player_two = Player("Two")
-new_deck = Deck()
-new_deck.shuffle_deck()
 
-for card in range(26):
-    player_one.add_cards(new_deck.deal_one())
-    player_two.add_cards(new_deck.deal_one())
-
-game_on = True
-round_num = 0
-
-while game_on:
-    round_num += 1
-    print('Round {}'.format(round_num))
-
-    if len(player_one.all_cards) == 0:
-        print('Player One out of cards! Player two wins')
-        game_on = False
-        break
-
-    if len(player_two.all_cards) == 0:
-        print('Player Two out of cards! Player one wins')
-        game_on = False
-        break
-
-    player_one_cards = []
-    player_one_cards.append(player_one.remove_one())
-
-    player_two_cards = []
-    player_two_cards.append(player_two.remove_one())
-
-    at_war = True
-    while at_war:
-        if player_one_cards[-1].value > player_two_cards[-1].value:
-            player_one.add_cards(player_one_cards)
-            player_one.add_cards(player_two_cards)
-            at_war = False
-        elif player_one_cards[-1].value < player_two_cards[-1].value:
-            player_one.add_cards(player_one_cards)
-            player_one.add_cards(player_two_cards)
-            at_war = False
+def take_bet(chips):
+    while True:
+        try:
+            bet = int(input("How many chips would you like to bet?"))
+            chips.bet = bet
+        except ValueError:
+            print('Please enter a number')
         else:
-            print('WAR!')
-            if len(player_one.all_cards) < 5:
-                print('Player one unable to declare war')
-                print('PLAYER TWO WINS!')
-                game_on = False
-                break
-            elif len(player_two.all_cards) < 5:
-                print('Player two unable to declare war')
-                print('PLAYER ONE WINS!')
-                game_on = False
-                break
+            if chips.bet > chips.total:
+                print("Not enough. You only have {} chips remaining".format(chips.total))
             else:
-                for num in range(5):
-                    player_one_cards.append(player_one.remove_one())
-                    player_two_cards.append(player_two.remove_one())
+                break
 
+
+def hit(deck, hand):
+    dealedCard = deck.deal_one()
+    hand.add_card(dealedCard)
+    hand.adjust_for_ace()
+
+
+def hit_or_stand(deck, hand):
+    global playing  # to control an upcoming while loop
+    userSelection = input("Hit or stand? Enter h or s")
+
+    while True:
+        if userSelection == 'h':
+            hit(deck, hand)
+            playing = True
+        elif userSelection == 's':
+            playing = False
+        else:
+            print("Please enter h or s only")
+            continue
+        break
+
+
+def show_some(player, dealer):
+    print("\nDealer's Hand:")
+    print(" <card hidden>")
+    print('', dealer.cards[1])
+    print("\nPlayer's Hand:", *player.cards, sep='\n ')  # or a loop
+
+
+def show_all(player, dealer):
+    print("\nDealer's Hand:", *dealer.cards, sep='\n ')
+    print("Dealer's Hand =", dealer.value)
+    print("\nPlayer's Hand:", *player.cards, sep='\n ')
+    print("Player's Hand =", player.value)
+
+
+def player_busts(chips):
+    print("BUST PLAYER!")
+    chips.lose_bet()
+
+
+def player_wins(chips):
+    print("PLAYER WINS!")
+    chips.win_bet()
+
+
+def dealer_busts(chips):
+    print("BUST DEALER!")
+    chips.lose_bet()
+
+
+def dealer_wins(chips):
+    print("DEALER WINS!")
+    chips.win_bet()
+
+
+def push():
+    print('Dealer and player tie! PUSH')
+
+
+print("Blackjack game")
+
+# Create & shuffle the deck, deal two cards to each player
+deck = Deck()
+deck.shuffle_deck()
+
+# Set up the Player's chips
+player = Hand()
+dealer = Hand()
+
+for card in range(2):
+    player.add_card(deck.deal_one())
+    dealer.add_card(deck.deal_one())
+
+# Prompt the Player for their bet
+player_chips = Chips()
+take_bet(player_chips)
+
+show_some(player, dealer)
+
+while playing:
+    hit_or_stand(deck, player)
+    show_some(player, dealer)
+
+    # If Player hand exceeds 21, then busted and break loop
+    if player.value > 21:
+        player_busts(player_chips)
+        break
+
+# If Player hasn't busted, play Dealer's hand until Dealer reaches 17
+if player.value <= 21:
+    while dealer.value < player.value:
+        hit(deck, dealer)
+
+    show_all(player, dealer)
+
+    # Run different winning scenarios
+    if dealer.value > 21:
+        dealer_busts(player_chips)
+
+    elif dealer.value > player.value:
+        dealer_wins(player_chips)
+    elif dealer.value < player.value:
+        player_wins(player_chips)
+    else:
+        push()
 
 
